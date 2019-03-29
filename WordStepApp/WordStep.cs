@@ -52,9 +52,10 @@ namespace WordStepApp
             string resultsFilePath = GetUserInputPath("\nPlease enter a path to a results file: ", true);
             string startWord = GetUserInputWord("\nPlease enter a start word: ");
             string endWord = GetUserInputWord("\nPlease enter an end word: ");
+            string algorithm = GetUserOption("\nUse efficient algorithm?");
 
             WordStepAlgorithm wordDictionary = new WordStepAlgorithm(dictionaryFilePath, startWord, endWord, resultsFilePath);
-            wordDictionary.RunAlgorithm();
+            wordDictionary.RunAlgorithm(algorithm == "Y" ? 1 : 0);
 
             do
             {
@@ -66,7 +67,7 @@ namespace WordStepApp
                 }
                 wordDictionary.StartWord = GetUserInputWord("\nPlease enter a start word: ");
                 wordDictionary.EndWord = GetUserInputWord("\nPlease enter an end word: ");
-                wordDictionary.RunAlgorithm();
+                wordDictionary.RunAlgorithm(algorithm == "Y" ? 1 : 0);
 
             } while (running);
             
@@ -78,7 +79,8 @@ namespace WordStepApp
         private static void RunAlgorithm(string[] parameters)
         {
             WordStepAlgorithm wordDictionary = new WordStepAlgorithm(parameters[0], parameters[1], parameters[2], parameters[3]);
-            wordDictionary.RunAlgorithm();
+            wordDictionary.RunAlgorithm(0);
+            wordDictionary.RunAlgorithm(1);
             Console.WriteLine("Press enter to terminate program.");
             Console.ReadLine();
         }

@@ -18,17 +18,23 @@ namespace WordStepApp
     {
         private Dictionary<int, Node> Nodes = new Dictionary<int, Node>();
 
-        public class Node
+        /// <summary>
+        /// Clears a graph of nodes and associated edges.
+        /// </summary>
+        public void ClearGraph()
         {
-            public readonly int id;
-            public readonly string payload;
-            public readonly LinkedList<Node> adjacent = new LinkedList<Node>();
+            Nodes.Clear();
+        }
 
-            public Node(int id, string payload)
-            {
-                this.id = id;
-                this.payload = payload;
-            }
+        /// <summary>
+        /// Returns the number of nodes in the graph.
+        /// </summary>
+        /// <returns>
+        /// An integer count.
+        /// </returns>
+        public int NodeCount()
+        {
+            return Nodes.Count;
         }
 
         /// <summary>
@@ -89,7 +95,7 @@ namespace WordStepApp
         {
             try
             {
-                return Nodes[id];
+                return Nodes.FirstOrDefault(x => x.Value.id == id).Value;
             }
             catch (KeyNotFoundException e)
             {

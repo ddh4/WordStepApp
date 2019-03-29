@@ -71,7 +71,7 @@ namespace WordStepApp
         /// <returns>
         /// A string list containing the shortest path between two nodes.
         /// </returns>
-        protected List<string> GetPathPayload(Dictionary<string, string> parent, string start, string end)
+        public List<string> GetPathPayload(Dictionary<string, string> parent, string start, string end)
         {
             List<string> path = new List<string>
             {

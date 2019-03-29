@@ -2,6 +2,7 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace WordStepApp
 {
@@ -22,7 +23,7 @@ namespace WordStepApp
         public string EndWord { get; set; }
         private readonly string ResultsPath;
 
-        HashSet<string> WordDictionary = new HashSet<string>();
+        public HashSet<string> WordDictionary { get; private set; }
         UndirectedGraph WordGraph = new UndirectedGraph();
 
         /// <summary>
@@ -34,6 +35,7 @@ namespace WordStepApp
             this.StartWord = startWord.ToLower();
             this.EndWord = endWord.ToLower();
             this.ResultsPath = resultsPath;
+            WordDictionary = new HashSet<string>();
         }
 
         /// <summary>
@@ -43,22 +45,42 @@ namespace WordStepApp
         /// 3. Performs BFS.
         /// 4. Saves the result to a file.
         /// </summary>
-        public void RunAlgorithm()
+        public void RunAlgorithm(int algorithm)
         {
             if (!DictionaryLoaded)
             {
                 Console.WriteLine("\nLoading dictionary of valid words...");
                 DictionaryLoaded = LoadDictionary();
             }
-            if (!GraphConstructed)
+            if (!GraphConstructed && algorithm == 0)
             {
                 Console.WriteLine("Building graph of valid words...");
                 GraphConstructed = BuildWordGraph();
             }
             
-            Console.WriteLine("Finding word chain from {0} to {1} using BFS...\n", StartWord, EndWord);
-            (bool, List<string>) result = CheckPathExists(StartWord, EndWord);
+            Console.Write("\nFinding word chain from {0} to {1} using ", StartWord, EndWord);
 
+            (bool, List<string>) result = (false, null);
+
+            switch (algorithm)
+            {
+                case 0:
+                    Console.WriteLine("Algorithm 1 (complete graph)...");
+                    result = CheckPathExists(StartWord, EndWord);
+                    break;
+                case 1:
+                    Console.WriteLine("Algorithm 2 (dynamic graph)...");
+                    WordGraph.ClearGraph();
+                    result = CreateGraphBFS(StartWord, EndWord);
+                    break;
+                default:
+                    Console.WriteLine("Algorithm 1 (complete graph)...");
+                    result = CheckPathExists(StartWord, EndWord);
+                    break;
+            }
+
+            Console.WriteLine("Generated graph contains {0} nodes.\n", WordGraph.NodeCount());
+            Console.Write("Result: ");
             if (result.Item1)
             {
                 result.Item2.ForEach(i => Console.Write(i.ToString()+" "));
@@ -69,6 +91,89 @@ namespace WordStepApp
             {
                 Console.WriteLine("No path exists for {0} and {1}.", StartWord, EndWord);
             }
+        }
+
+        /// <summary>
+        /// Finds all legal word transformations of distance 1.
+        /// </summary>
+        /// <returns>
+        /// A string list of direct transformations.
+        /// </returns>
+        public List<string> FindNeighbours(string source)
+        {
+            List<string> generatedWords = new List<string>();
+            for (int i = 0; i < source.Length; i++)
+            {
+                var temp = source.ToCharArray();
+
+                for (char c = 'a'; c <= 'z'; c++)
+                {
+                    temp[i] = c;
+                    string newWord = new string(temp);
+                    if (newWord == source) continue;
+                    if (IsValidWord(newWord)) generatedWords.Add(newWord);
+                }
+            }
+            return generatedWords;
+        }
+
+        /// <summary>
+        /// Builds and finds the shortest path between two nodes in the graph.
+        /// </summary>
+        /// <returns>
+        /// A tuple containing a boolean (if a path existed) and a string list containing the path.
+        /// </returns>
+        private (bool, List<string>) CreateGraphBFS(string source, string destination)
+        {
+            Dictionary<int, int> parent = new Dictionary<int, int>();
+            Dictionary<string, string> parentMapping = new Dictionary<string, string>();
+
+            LinkedList<Node> nextToVisit = new LinkedList<Node>();
+            HashSet<int> visited = new HashSet<int>();
+            int nodeId = 1;
+            nextToVisit.AddLast(new Node(1, source));
+            nodeId++;
+
+            while(nextToVisit.Count > 0)
+            {
+                Node node = nextToVisit.First();
+                nextToVisit.RemoveFirst();
+
+                if (node.payload == destination)
+                {
+                    return (true, null);
+                }
+                if (visited.Contains(node.id))
+                {
+                    continue;
+                }
+                visited.Add(node.id);
+
+                foreach (string neighbour in FindNeighbours(node.payload))
+                {
+                    var neighbourNode = WordGraph.GetNode(WordGraph.GetNodeId(neighbour));
+
+                    if (neighbourNode == null)
+                    {
+                        WordGraph.AddNode(nodeId, new Node(nodeId++, neighbour));
+                        neighbourNode = WordGraph.GetNode(WordGraph.GetNodeId(neighbour));
+                    }
+
+                    if (!visited.Contains(neighbourNode.id) && !parentMapping.ContainsKey(neighbourNode.payload))
+                    {
+                        parentMapping[neighbourNode.payload] = node.payload;
+                    }
+
+                    nextToVisit.AddLast(neighbourNode);
+
+                    if (neighbourNode.payload == destination)
+                    {
+                        return (true, WordGraph.GetPathPayload(parentMapping, source, destination));
+                    }
+                }
+            }
+
+            return (false, null);
         }
 
         /// <summary>
@@ -151,7 +256,7 @@ namespace WordStepApp
             int id = 1;
             foreach (string word in WordDictionary)
             {
-                WordGraph.AddNode(id, new Graph.Node(id, word));
+                WordGraph.AddNode(id, new Node(id, word));
                 id++;
             }
         }
@@ -174,7 +279,6 @@ namespace WordStepApp
             {
                 return (false, null);
             }
-             
         }
 
         /// <summary>
