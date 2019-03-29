@@ -32,7 +32,7 @@ By entering parameters via user input, the algorithm can be run multiple times w
 
 ### Update
 
-A more efficient method has been implemented that implements nodes and edges dynamically during the BFS process.
+A more efficient method has been implemented that creates nodes and edges dynamically during the BFS process.
 
 On the test dataset, this reduces the number of nodes in the graph from 2230 to 140 for input (startWord = "bird", endWord = "wing") 
 and reduces the number of nodes from 2230 to 52 for input (startWord = "span", endWord = "spot").
